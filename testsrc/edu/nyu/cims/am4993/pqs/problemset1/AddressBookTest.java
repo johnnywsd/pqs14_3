@@ -265,7 +265,7 @@ public class AddressBookTest {
       Entry entry = builder.build();
       entriesAdded2.add(entry);
     }
-    for(int i=0; i<NUM2; i++){
+    for(int i=0; i<NUM3; i++){
       Builder builder = new Builder(name3, address3);
       Entry entry = builder.build();
       entriesAdded3.add(entry);
@@ -308,6 +308,69 @@ public class AddressBookTest {
     rtn = ab.search(Properties.EMAIL, "man");
     assertEquals(rtn.size(), NUM1 + NUM2);
     
+  }
+  
+  @Test(expected = InvalidAddressBookException.class)
+  public void saveNullAddressBook() throws InvalidAddressBookException{
+    AddressBook ab = null;
+    AddressBook.save(ab);
+  }
+  
+  @Test
+  public void saveNormally() 
+      throws InvalidUserNameException,
+      InvalidEntryException, InvalidAddressBookException{
+    int NUM1 = 10;
+    int NUM2 = 20;
+    int NUM3 = 30;
+    String name = "AddressBook";
+    String name1 = "Yes Man";
+    String address1 = "Yes Man Address";
+    String phoneNum1 = "1234567890";
+    String email1 = "yesman@gmail.com";
+    String note1 = "I am Yes Man";
+    
+    String name2 = "No Man";
+    String address2 = "No Man Address";
+    String phoneNum2 = "0987654321";
+    String email2 = "noman@gmail.com";
+    String note2 = "I am No Man";
+    
+    String name3 = "OK Man";
+    String address3 = "No Man Address";
+    
+    AddressBook ab = AddressBook.newInstance(name);
+    ArrayList<Entry> rtn = null;
+    ArrayList<Entry> entriesAdded1 = new ArrayList<Entry>();
+    ArrayList<Entry> entriesAdded2 = new ArrayList<Entry>();
+    ArrayList<Entry> entriesAdded3 = new ArrayList<Entry>();
+    for(int i=0; i<NUM1; i++){
+      Builder builder = new Builder(name1, address1);
+      builder.phoneNum(phoneNum1).email(email1).note(note1);
+      Entry entry = builder.build();
+      entriesAdded1.add(entry);
+    }
+    for(int i=0; i<NUM2; i++){
+      Builder builder = new Builder(name2, address2);
+      builder.phoneNum(phoneNum2).email(email2).note(note2);
+      Entry entry = builder.build();
+      entriesAdded2.add(entry);
+    }
+    for(int i=0; i<NUM3; i++){
+      Builder builder = new Builder(name3, address3);
+      Entry entry = builder.build();
+      entriesAdded3.add(entry);
+    }
+    for (Entry item : entriesAdded1){
+      ab.addEntry(item);
+    }
+    for (Entry item : entriesAdded2){
+      ab.addEntry(item);
+    }
+    for (Entry item : entriesAdded3){
+      ab.addEntry(item);
+    }
+    AddressBook.save(ab);
   }
   
 
