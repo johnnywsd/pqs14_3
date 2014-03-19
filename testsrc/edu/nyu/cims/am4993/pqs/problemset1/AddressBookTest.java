@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.UUID;
 
 import org.junit.Test;
 
@@ -17,12 +16,12 @@ public class AddressBookTest {
    */
   @Test(expected = Exception.class)
   public void constructorDefault() {
-    AddressBook ab = new AddressBook();
+    new AddressBook();
   }
   
   @Test(expected = InvalidUserNameException.class)
   public void newInstanceNull() throws InvalidUserNameException {
-    AddressBook ab = AddressBook.newInstance(null);
+    AddressBook.newInstance(null);
   }
   
   @Test
@@ -30,9 +29,9 @@ public class AddressBookTest {
     String name = "Shouda Wang";
     AddressBook ab = AddressBook.newInstance(name);
     String errMsg = "New AddressBook instance created is null";
-    assertNotEquals(errMsg, ab, null);
+    assertNotEquals(errMsg, null, ab);
     errMsg = "AddressBook instance userName chaged";
-    assertEquals(errMsg, ab.getUserName(), name);
+    assertEquals(errMsg, name, ab.getUserName());
   }
   
   @Test
@@ -317,9 +316,10 @@ public class AddressBookTest {
   }
   
   @Test
-  public void saveNormally() 
+  public void saveNormallyAndReadNormally() 
       throws InvalidUserNameException,
-      InvalidEntryException, InvalidAddressBookException{
+      InvalidEntryException, 
+      InvalidAddressBookException, InvalidFileNameException{
     int NUM1 = 10;
     int NUM2 = 20;
     int NUM3 = 30;
@@ -340,7 +340,6 @@ public class AddressBookTest {
     String address3 = "No Man Address";
     
     AddressBook ab = AddressBook.newInstance(name);
-    ArrayList<Entry> rtn = null;
     ArrayList<Entry> entriesAdded1 = new ArrayList<Entry>();
     ArrayList<Entry> entriesAdded2 = new ArrayList<Entry>();
     ArrayList<Entry> entriesAdded3 = new ArrayList<Entry>();
@@ -371,7 +370,149 @@ public class AddressBookTest {
       ab.addEntry(item);
     }
     AddressBook.save(ab);
+    
+    String filename = String.format("%s_%s.ser",ab.getUserName(), ab.getId());
+    AddressBook readAddressBook = AddressBook.read(filename);
+    ArrayList<Entry> readEntries = readAddressBook.getEntries();
+    assertEquals(NUM1 + NUM2 + NUM3, readEntries.size());
+    assertEquals(ab.getEntries(), readEntries);
   }
   
+  /**
+   * Test. Whether it is OK to have "~" or "#" in the entry's members.
+   * Failed! Reason: It use "~##~" as separator and use regular text to save 
+   * the address book and its entries which means that we cannot have "~##~" 
+   * in our entries' name, address, note, etc.
+   * @throws InvalidFileNameException
+   * @throws InvalidUserNameException
+   * @throws InvalidEntryException
+   * @throws InvalidAddressBookException
+   */
+  @Test
+  public void saveContainSpecialChars() 
+      throws InvalidFileNameException,
+      InvalidUserNameException,
+      InvalidEntryException,
+      InvalidAddressBookException{
+    int NUM1 = 10;
+    
+    String name = "AddressBook";
+    String name1 = "Yes Man";
+    String address1 = "Yes Man Address~#~";
+    String phoneNum1 = "1234567890";
+    String email1 = "yesman@gmail.com";
+    String note1 = "I am Yes Man";
+    
+    
+    AddressBook ab = AddressBook.newInstance(name);
+    ArrayList<Entry> entriesAdded1 = new ArrayList<Entry>();
+   
+    for(int i=0; i<NUM1; i++){
+      Builder builder = new Builder(name1, address1);
+      builder.phoneNum(phoneNum1).email(email1).note(note1);
+      Entry entry = builder.build();
+      entriesAdded1.add(entry);
+    }
+   
+    for (Entry item : entriesAdded1){
+      ab.addEntry(item);
+    }
+    
+    AddressBook.save(ab);
+    
+    String filename = String.format("%s_%s.ser",ab.getUserName(), ab.getId());
+    AddressBook readAddressBook = AddressBook.read(filename);
+    ArrayList<Entry> readEntries = readAddressBook.getEntries();
+    assertEquals(NUM1, readEntries.size());
+    assertEquals(ab.getEntries(), readEntries);
+  }
+  
+  
+  /**
+   * Test, Whether it can save and read AddressBook instance that
+   * have no entries
+   * @throws InvalidUserNameException
+   * @throws InvalidAddressBookException
+   * @throws InvalidFileNameException
+   */
+  @Test
+  public void saveEmptyEntry() 
+      throws InvalidUserNameException,
+      InvalidAddressBookException,
+      InvalidFileNameException{
+    String name = "AddressBook";
+    AddressBook ab = AddressBook.newInstance(name);
+    AddressBook.save(ab);
+    String filename = String.format("%s_%s.ser",ab.getUserName(), ab.getId());
+    AddressBook read = AddressBook.read(filename);
+    assertEquals(ab.getEntries(), read.getEntries());
+  }
+  
+  /**
+   * Test whether Special chars can be AddressBook's name. File system may not
+   * allow some special characters as file name. 
+   * @throws InvalidFileNameException
+   * @throws InvalidUserNameException
+   * @throws InvalidEntryException
+   * @throws InvalidAddressBookException
+   */
+  @Test
+  public void saveFileName() 
+      throws InvalidFileNameException,
+      InvalidUserNameException,
+      InvalidEntryException,
+      InvalidAddressBookException{
+    String name = "*?/";
+    String name1 = "Yes Man";
+    String address1 = "Yes Man Address";
+    
+    
+    AddressBook ab = AddressBook.newInstance(name);
+    Builder builder1 = new Builder(name1, address1);
+    Entry entry1 = builder1.build();
+    ab.addEntry(entry1);
+    
+    
+    AddressBook.save(ab);
+    
+    String filename = String.format("%s_%s.ser",ab.getUserName(), ab.getId());
+    AddressBook readAddressBook = AddressBook.read(filename);
+    ArrayList<Entry> readEntries = readAddressBook.getEntries();
+    assertEquals(ab.getEntries(), readEntries);
+  }
+  
+  @Test
+  public void equalsSameInstance() 
+      throws InvalidUserNameException, InvalidEntryException{
+    String name = "Address Book";
+    String name1 = "Yes Man";
+    String address1 = "Yes Man Address";
+    AddressBook ab = AddressBook.newInstance(name);
+    Builder builder1 = new Builder(name1, address1);
+    Entry entry1 = builder1.build();
+    ab.addEntry(entry1);
+    if (!ab.equals(ab)){
+      fail("AddressBook instance is not equal to itself");
+    }
+  }
+  
+  @Test
+  public void hashCodeEqualInstance() 
+      throws InvalidUserNameException, InvalidEntryException{
+    String name = "Address Book";
+    String name1 = "Yes Man";
+    String address1 = "Yes Man Address";
+    AddressBook ab1 = AddressBook.newInstance(name);
+    AddressBook ab2 = AddressBook.newInstance(name);
+    Builder builder1 = new Builder(name1, address1);
+    Entry entry1 = builder1.build();
+    ab1.addEntry(entry1);
+    Builder builder2 = new Builder(name1, address1);
+    Entry entry2 = builder2.build();
+    ab2.addEntry(entry2);
+    if (ab1.hashCode() != ab2.hashCode()){
+      fail("hash code not equal");
+    }
+  }
 
 }
